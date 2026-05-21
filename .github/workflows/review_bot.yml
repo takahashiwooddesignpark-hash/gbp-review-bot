@@ -31,16 +31,14 @@ jobs:
 
       - name: .env を作成
         run: |
-          cat > .env << 'EOF'
-          GOOGLE_PLACES_API_KEY=${{ secrets.GOOGLE_PLACES_API_KEY }}
-          GOOGLE_PLACE_ID=${{ secrets.GOOGLE_PLACE_ID }}
-          LW_CLIENT_ID=${{ secrets.LW_CLIENT_ID }}
-          LW_CLIENT_SECRET=${{ secrets.LW_CLIENT_SECRET }}
-          LW_SERVICE_ACCOUNT=${{ secrets.LW_SERVICE_ACCOUNT }}
-          LW_PRIVATE_KEY_PATH=./lineworks_private_key.pem
-          LW_BOT_ID=${{ secrets.LW_BOT_ID }}
-          LW_USER_ID=${{ secrets.LW_USER_ID }}
-          EOF
+          echo "GOOGLE_PLACES_API_KEY=${{ secrets.GOOGLE_PLACES_API_KEY }}" >> .env
+          echo "GOOGLE_PLACE_ID=${{ secrets.GOOGLE_PLACE_ID }}" >> .env
+          echo "LW_CLIENT_ID=${{ secrets.LW_CLIENT_ID }}" >> .env
+          echo "LW_CLIENT_SECRET=${{ secrets.LW_CLIENT_SECRET }}" >> .env
+          echo "LW_SERVICE_ACCOUNT=${{ secrets.LW_SERVICE_ACCOUNT }}" >> .env
+          echo "LW_PRIVATE_KEY_PATH=./lineworks_private_key.pem" >> .env
+          echo "LW_BOT_ID=${{ secrets.LW_BOT_ID }}" >> .env
+          echo "LW_USER_ID=${{ secrets.LW_USER_ID }}" >> .env
 
       - name: Botを実行
         run: python main.py
