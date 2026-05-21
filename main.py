@@ -1,10 +1,10 @@
 """
-GBP口コミ監視Bot（Google Places API版）
+GBP口コミ監視Bot（Googleマップスクレイピング版）
 新しい口コミを検知してLINE WORKSに通知する。
 
 使い方:
   1回実行: python main.py
-  定期実行: python main.py --loop  (CHECK_INTERVAL_SECONDS間隔でポーリング)
+  定期実行: python main.py --loop
   cron推奨: */5 * * * * /path/to/venv/bin/python /path/to/main.py
 """
 
@@ -16,7 +16,7 @@ import time
 
 from dotenv import load_dotenv
 
-import gbp_client
+import scraper
 import lineworks_client
 import storage
 
@@ -34,7 +34,6 @@ def _require(key: str) -> str:
 
 
 def check_once() -> None:
-    api_key = _require("GOOGLE_PLACES_API_KEY")
     place_id = _require("GOOGLE_PLACE_ID")
 
     lw_client_id = _require("LW_CLIENT_ID")
@@ -45,19 +44,19 @@ def check_once() -> None:
     lw_user_id = _require("LW_USER_ID")
 
     log.info("口コミを取得中: place_id=%s", place_id)
-    reviews = gbp_client.fetch_reviews(place_id, api_key)
+    reviews = scraper.scrape_reviews(place_id)
     log.info("取得件数: %d件", len(reviews))
 
     seen_ids = storage.load_seen_ids()
 
-    # 初回実行時は既存レビューをすべて既読にして通知しない
+    # 初回実行時は既存口コミを既読にして通知しない
     if not seen_ids:
         log.info("初回実行: 既存の%d件を既読として登録します（通知しません）", len(reviews))
-        seen_ids = {gbp_client.review_id(r) for r in reviews}
+        seen_ids = {scraper.review_id(r) for r in reviews}
         storage.save_seen_ids(seen_ids)
         return
 
-    new_reviews = [r for r in reviews if gbp_client.review_id(r) not in seen_ids]
+    new_reviews = [r for r in reviews if scraper.review_id(r) not in seen_ids]
 
     if not new_reviews:
         log.info("新しい口コミはありません")
@@ -66,9 +65,9 @@ def check_once() -> None:
     log.info("新しい口コミ: %d件", len(new_reviews))
 
     for review in reversed(new_reviews):
-        message = gbp_client.format_review(review)
-        rid = gbp_client.review_id(review)
-        log.info("通知送信: %s", rid)
+        message = scraper.format_review(review)
+        rid = scraper.review_id(review)
+        log.info("通知送信: %s", review.get("author_name"))
         lineworks_client.send_message(
             text=message,
             bot_id=lw_bot_id,
