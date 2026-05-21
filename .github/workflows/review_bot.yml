@@ -2,7 +2,7 @@ name: GBP口コミ監視Bot
 
 on:
   schedule:
-    - cron: '*/15 * * * *'  # 15分おきに実行
+    - cron: '*/5 * * * *'  # 5分おきに実行
   workflow_dispatch:          # 手動実行ボタンも有効化
 
 jobs:
