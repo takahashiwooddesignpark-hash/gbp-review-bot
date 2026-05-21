@@ -1,0 +1,6 @@
+.env
+lineworks_private_key.pem
+token.json
+venv/
+__pycache__/
+*.pyc

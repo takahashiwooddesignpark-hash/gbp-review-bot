@@ -1,0 +1,54 @@
+name: GBP口コミ監視Bot
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'  # 15分おきに実行
+  workflow_dispatch:          # 手動実行ボタンも有効化
+
+jobs:
+  check-reviews:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Python 3.12 をセットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: 依存パッケージをインストール
+        run: pip install -r requirements.txt
+
+      - name: LINE WORKS 秘密鍵を書き出す
+        run: echo "${{ secrets.LW_PRIVATE_KEY }}" > lineworks_private_key.pem
+
+      - name: .env を作成
+        run: |
+          cat > .env << 'EOF'
+          GOOGLE_PLACES_API_KEY=${{ secrets.GOOGLE_PLACES_API_KEY }}
+          GOOGLE_PLACE_ID=${{ secrets.GOOGLE_PLACE_ID }}
+          LW_CLIENT_ID=${{ secrets.LW_CLIENT_ID }}
+          LW_CLIENT_SECRET=${{ secrets.LW_CLIENT_SECRET }}
+          LW_SERVICE_ACCOUNT=${{ secrets.LW_SERVICE_ACCOUNT }}
+          LW_PRIVATE_KEY_PATH=./lineworks_private_key.pem
+          LW_BOT_ID=${{ secrets.LW_BOT_ID }}
+          LW_USER_ID=${{ secrets.LW_USER_ID }}
+          EOF
+
+      - name: Botを実行
+        run: python main.py
+
+      - name: 既読レビューIDを保存（変更があればコミット）
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add seen_reviews.json
+          git diff --staged --quiet || git commit -m "Update seen reviews [skip ci]"
+          git push
